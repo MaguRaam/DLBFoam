@@ -25,6 +25,7 @@ License
 
 #include "loadBalancedChemistryModel.H"
 #include "loadBalanced_pyJacChemistryModel.H"
+#include "cemaChemistryModel.H"
 
 #include "forGases.H"
 #include "forLiquids.H"
