@@ -36,7 +36,7 @@ SourceFiles
 
 
 #include "EigenMatrix.H"
-#include "chemistryModel.H"
+#include "loadBalanced_pyJacChemistryModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

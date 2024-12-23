@@ -41,13 +41,14 @@ License
     (                                                                          \
         loadBalanced_pyJacChemistryModel,                                      \
         ThermoPhysics                                                          \
-    )
+    );                                                                         \
                                                                                \
     defineChemistrySolver                                                      \
     (                                                                          \
         cemaChemistryModel,                                                    \
         ThermoPhysics                                                          \
     )
+
 
 #define DLBmakeChemistrySolvers(Solver, ThermoPhysics)                         \
     makeChemistrySolver                                                        \
@@ -61,7 +62,7 @@ License
         Solver,                                                                \
         loadBalanced_pyJacChemistryModel,                                      \
         ThermoPhysics                                                          \
-    )
+    );                                                                         \
     makeChemistrySolver                                                        \
     (                                                                          \
         Solver,                                                                \
