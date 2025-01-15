@@ -1,3 +1,0 @@
-EXE_INC = \
-    -I../../src/OpenFOAM/matrices/EigenMatrix
-LIB_LIBS = \
