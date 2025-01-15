@@ -35,8 +35,8 @@ SourceFiles
 #define cemaChemistryModel_H
 
 
-#include "EigenMatrix.H"
-#include "loadBalanced_pyJacChemistryModel.H"
+#include "eigendecomposition.H"
+#include "chemistryModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,8 +57,8 @@ class cemaChemistryModel
         //- The number of elements
         label nElements_;
 
-        //- Chemical explosive mode
-        mutable volScalarField cem_;
+        //- Eigenvalue of the Jacobian
+        mutable volScalarField lambdaExp_;
 
 
     // Private Member Functions
@@ -85,10 +85,19 @@ public:
 
     // Member Functions
 
-        //- Calculate maximum Jacobian eigenvalue
-        virtual scalar cema(const scalarSquareMatrix& J) const;
+        //- Calculate cema fields
+        virtual void cema
+        (
+            const label celli,
+            const scalarField& YTp,
+            const scalarSquareMatrix& J
+        ) const;
 
-        // Overrides to loadBalanced_pyJacChemistryModel
+        // Overrides to chemistryModel
+
+            //- Solve the reaction system for the given time step
+            //  and return the characteristic time
+            virtual scalar solve(const scalar deltaT);
 
             //- Calculate the ODE jacobian
             virtual void jacobian
@@ -98,7 +107,22 @@ public:
                 const label li,
                 scalarField& dYTpdt,
                 scalarSquareMatrix& J
-            ) const override;
+            ) const;
+
+
+        // ODE solution functions
+
+            //- Solve the ODE system
+            virtual void solve
+            (
+                scalar& p,
+                scalar& T,
+                scalarField& Y,
+                const label li,
+                scalar& deltaT,
+                scalar& subDeltaT
+            ) const = 0;
+
 
     // Member Operators
 

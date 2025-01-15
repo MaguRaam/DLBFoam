@@ -35,11 +35,11 @@ Foam::cemaChemistryModel<ThermoType>::cemaChemistryModel
 :
     loadBalanced_pyJacChemistryModel<ThermoType>(thermo),
     nElements_(this->template lookup<label>("nElements")),
-    cem_
+    lambdaExp_
     (
         IOobject
         (
-            "cem",
+            "lambdaExp",
             this->mesh().time().name(),
             this->mesh(),
             IOobject::NO_READ,
@@ -63,18 +63,23 @@ Foam::cemaChemistryModel<ThermoType>::~cemaChemistryModel()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class ThermoType>
-Foam::scalar Foam::cemaChemistryModel<ThermoType>::cema
+void Foam::cemaChemistryModel<ThermoType>::cema
 (
+    const label celli,
+    const scalarField& YTp,
     const scalarSquareMatrix& J
 ) const
 {
     // Compute eigen values
-    const EigenMatrix<scalar> EM(J, false);
-    DiagonalMatrix<scalar> EValsRe(EM.EValsRe());
-    const DiagonalMatrix<scalar> EValsIm(EM.EValsIm());
+    eigendecomposition eigen(J);
+    scalarField EValsRe(eigen.d());
+    const scalarField& EValsIm(eigen.e());
+
+    // Get the size of the matrix
+    const label m = EValsRe.size();
 
     // Compute magnitude square of eigen values
-    const scalarList EValsMag(EValsRe*EValsRe + EValsIm*EValsIm);
+    const scalarField EValsMag(EValsRe*EValsRe + EValsIm*EValsIm);
 
     // Get the indices of magnitude of eigenvalues in increasing order
     labelList order;
@@ -82,14 +87,30 @@ Foam::scalar Foam::cemaChemistryModel<ThermoType>::cema
 
     // Skip conservation modes for elements and temperature
     const scalar smallestEVal = -vGreat;
-    
+
     for (label i = 0; i < nElements_ + 1; ++i)
     {
         EValsRe[order[i]] = smallestEVal;
     }
 
-    // Return cem (Combustion explosive mode)
-    return max(EValsRe);
+    // Find the index of maximum real part of eigenvalue
+    label iMax = findMax(EValsRe);
+
+    // Get the eigenvector corresponding to the maximum real part of eigenvalue
+    Field<scalar> cem = eigen.V().col(m, 0, iMax);
+
+    // Compute the maximum real part of eigenvalue
+    lambdaExp_[celli] = EValsRe[iMax];
+}
+
+
+template<class ThermoType>
+Foam::scalar Foam::cemaChemistryModel<ThermoType>::solve
+(
+    const scalar deltaT
+)
+{
+    return chemistryModel<ThermoType>::solve(deltaT);
 }
 
 
@@ -103,10 +124,10 @@ void Foam::cemaChemistryModel<ThermoType>::jacobian
     scalarSquareMatrix& J
 ) const
 {
-    loadBalanced_pyJacChemistryModel<ThermoType>::jacobian(t, YTp, celli, dYTpdt, J);
+    chemistryModel<ThermoType>::jacobian(t, YTp, celli, dYTpdt, J);
 
-    // Update cem field
-    cem_[celli] = cema(J);
+    // Calculate cema fields
+    cema(celli, YTp, J);
 }
 
 
